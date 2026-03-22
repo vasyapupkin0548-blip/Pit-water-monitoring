@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RG Gold - Мониторинг подземных вод</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RG Gold Mobile</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,208 +11,153 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        #map { height: 100vh; width: 100%; background: #cbd5e1; cursor: crosshair; }
-        .sidebar { height: 100vh; overflow-y: auto; box-shadow: -4px 0 20px rgba(0,0,0,0.15); }
-        .legend-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+        #map { height: 50vh; width: 100%; background: #cbd5e1; }
+        @media (min-width: 768px) { #map { height: 100vh; } }
+        .mobile-scroll { height: 50vh; overflow-y: auto; }
+        @media (min-width: 768px) { .mobile-scroll { height: 100vh; } }
     </style>
 </head>
-<body class="bg-gray-100 flex h-screen overflow-hidden">
+<body class="bg-gray-100 flex flex-col md:flex-row h-screen overflow-hidden">
 
-    <div class="flex-1 relative">
+    <div class="flex-1 relative border-b md:border-r border-gray-300">
         <div id="map"></div>
-        
-        <div class="absolute bottom-6 left-6 z-[1000] bg-white/95 p-4 rounded-xl shadow-xl border border-gray-200 text-[11px]">
-            <p class="font-black text-gray-400 mb-3 uppercase tracking-tighter">Цветовая индикация (л/с)</p>
-            <div class="flex items-center gap-3 mb-2"><div class="legend-dot bg-[#22c55e]"></div> <span class="font-bold text-gray-700">0 - 2.0</span></div>
-            <div class="flex items-center gap-3 mb-2"><div class="legend-dot bg-[#fac800]"></div> <span class="font-bold text-gray-700">2.0 - 5.0</span></div>
-            <div class="flex items-center gap-3"><div class="legend-dot bg-[#ef4444]"></div> <span class="font-bold text-gray-700">> 5.0</span></div>
+        <div class="absolute top-2 left-12 z-[1000] bg-white/80 p-2 rounded text-[10px] font-bold shadow">
+            Тапните по карте для выбора точки
         </div>
     </div>
 
-    <div class="w-[420px] bg-white sidebar flex flex-col font-sans">
-        <div class="p-6 border-b bg-slate-900 text-white">
-            <h1 class="text-2xl font-black tracking-tight">RG GOLD</h1>
-            <p class="text-[10px] text-blue-400 uppercase tracking-[0.2em] font-bold mt-1">Гидрогеологическая фиксация</p>
+    <div class="w-full md:w-[400px] bg-white mobile-scroll flex flex-col shadow-2xl">
+        <div class="p-4 border-b bg-slate-900 text-white flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-black">RG GOLD</h1>
+                <p class="text-[8px] text-blue-300 uppercase tracking-widest">Мобильный мониторинг</p>
+            </div>
+            <button onclick="exportToExcel()" class="bg-emerald-600 text-[10px] px-3 py-2 rounded font-bold">EXCEL ⬇</button>
         </div>
 
-        <div class="p-6 border-b bg-slate-50">
-            <form id="waterForm" class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-2 rounded border border-blue-100 shadow-sm">
-                        <label class="block text-[10px] font-black text-blue-500 uppercase italic">Координата X</label>
-                        <input type="text" id="posX" readonly required class="w-full bg-transparent font-mono text-sm font-bold text-slate-800 outline-none" placeholder="00000.0">
-                    </div>
-                    <div class="bg-white p-2 rounded border border-blue-100 shadow-sm">
-                        <label class="block text-[10px] font-black text-blue-500 uppercase italic">Координата Y</label>
-                        <input type="text" id="posY" readonly required class="w-full bg-transparent font-mono text-sm font-bold text-slate-800 outline-none" placeholder="00000.0">
-                    </div>
+        <div class="p-4 border-b space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-slate-50 p-2 rounded border text-center">
+                    <label class="block text-[9px] font-bold text-slate-400">X</label>
+                    <input type="text" id="posX" readonly class="w-full bg-transparent text-center font-bold text-sm outline-none">
                 </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1 font-sans">Дебит (л/с)</label>
-                        <input type="number" id="debit" step="0.1" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1 font-sans">Отметка (м)</label>
-                        <input type="number" id="elevation" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
-                    </div>
+                <div class="bg-slate-50 p-2 rounded border text-center">
+                    <label class="block text-[9px] font-bold text-slate-400">Y</label>
+                    <input type="text" id="posY" readonly class="w-full bg-transparent text-center font-bold text-sm outline-none">
                 </div>
+            </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1 font-sans">Борт</label>
-                        <select id="side" class="w-full p-2.5 border rounded-lg bg-white text-sm outline-none">
-                            <option>Северный</option>
-                            <option>Южный</option>
-                            <option>Восточный</option>
-                            <option>Западный</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1 font-sans">Уступ</label>
-                        <input type="text" id="bench" required placeholder="+280" class="w-full p-2.5 border rounded-lg text-sm font-bold outline-none">
-                    </div>
+            <form id="waterForm" class="space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="debit" step="0.1" required placeholder="Дебит л/с" class="p-3 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="number" id="elevation" required placeholder="Отметка м" class="p-3 border rounded-xl text-sm outline-none">
                 </div>
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] uppercase text-sm tracking-widest">
-                    Сохранить замер
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="side" class="p-3 border rounded-xl text-sm bg-white outline-none">
+                        <option>Северный</option><option>Южный</option><option>Восточный</option><option>Западный</option>
+                    </select>
+                    <input type="text" id="bench" required placeholder="Уступ" class="p-3 border rounded-xl text-sm outline-none">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs active:bg-blue-800 transition-all">
+                    СОХРАНИТЬ ЗАМЕР
                 </button>
             </form>
         </div>
 
-        <div class="p-6 flex-1 flex flex-col min-h-0">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-black text-slate-800 text-xs tracking-widest uppercase">Журнал фиксаций</h3>
-                <button onclick="exportToExcel()" class="text-[10px] font-black bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow-sm">
-                    ЭКСПОРТ (XLSX)
-                </button>
+        <div class="p-4 flex-1">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Журнал (в памяти устройства)</h3>
+                <button onclick="clearStorage()" class="text-[9px] text-red-500 font-bold underline">Очистить всё</button>
             </div>
-            <div id="pointsList" class="space-y-3 overflow-y-auto pr-2"></div>
+            <div id="pointsList" class="space-y-2 pb-10"></div>
         </div>
     </div>
 
     <script>
-        let savedPoints = [];
+        let savedPoints = JSON.parse(localStorage.getItem('pitData')) || [];
         let map, tempMarker;
 
-        // --- ВАШИ ПАРАМЕТРЫ ПРИВЯЗКИ ---
-        const mapConfig = {
-            url: 'map.jpg',
-            minX: 45663,  
-            minY: 15700,  
-            maxX: 47946,  
-            maxY: 17429   
-        };
+        const mapConfig = { url: 'map.jpg', minX: 45663, minY: 15700, maxX: 47946, maxY: 17429 };
 
         function getMarkerColor(debit) {
             const d = parseFloat(debit);
-            if (d <= 2) return '#22c55e';
-            if (d <= 5) return '#fac800';
-            return '#ef4444';
+            return d <= 2 ? '#22c55e' : (d <= 5 ? '#fac800' : '#ef4444');
         }
 
         function initMap() {
-            const imageBounds = [
-                [mapConfig.minY, mapConfig.minX], 
-                [mapConfig.maxY, mapConfig.maxX]  
-            ];
-
-            map = L.map('map', {
-                crs: L.CRS.Simple,
-                // Убираем жесткие ограничения масштаба
-                minZoom: -5, 
-                maxZoom: 10, // Позволяет очень сильное приближение
-                wheelDebounceTime: 10,
-                attributionControl: false
-            });
-
+            const imageBounds = [[mapConfig.minY, mapConfig.minX], [mapConfig.maxY, mapConfig.maxX]];
+            map = L.map('map', { crs: L.CRS.Simple, maxBounds: imageBounds, minZoom: -3, maxZoom: 5, attributionControl: false });
             L.imageOverlay(mapConfig.url, imageBounds).addTo(map);
             map.fitBounds(imageBounds);
 
+            // Отрисовка старых точек из памяти
+            savedPoints.forEach(p => drawPoint(p));
+
             map.on('click', function(e) {
                 if (tempMarker) map.removeLayer(tempMarker);
-                
-                tempMarker = L.circleMarker(e.latlng, {
-                    radius: 6,
-                    fillColor: "#1e293b",
-                    color: "#fff",
-                    weight: 2,
-                    fillOpacity: 1
-                }).addTo(map);
-
+                tempMarker = L.circleMarker(e.latlng, { radius: 10, fillColor: "#1e293b", color: "#fff", weight: 3, fillOpacity: 1 }).addTo(map);
                 document.getElementById('posX').value = e.latlng.lng.toFixed(1);
                 document.getElementById('posY').value = e.latlng.lat.toFixed(1);
             });
         }
 
+        function drawPoint(p) {
+            L.circleMarker([p.Y_Coord, p.X_Coord], { radius: 12, fillColor: getMarkerColor(p.Дебит_л_с), color: "#fff", weight: 2, fillOpacity: 0.9 })
+             .addTo(map).bindPopup(`<b>${p.Борт}</b>: ${p.Дебит_л_с} л/с`);
+        }
+
         document.getElementById('waterForm').onsubmit = function(e) {
             e.preventDefault();
             const x = document.getElementById('posX').value;
-            const y = document.getElementById('posY').value;
-            
-            if (!x) return alert("Пожалуйста, отметьте точку на карте!");
+            if (!x) return alert("Отметьте точку!");
 
-            const debit = document.getElementById('debit').value;
             const point = {
                 "Время": new Date().toLocaleString('ru-RU'),
-                "X_Coord": x,
-                "Y_Coord": y,
-                "Дебит_л_с": debit,
+                "X_Coord": x, "Y_Coord": document.getElementById('posY').value,
+                "Дебит_л_с": document.getElementById('debit').value,
                 "Отметка_м": document.getElementById('elevation').value,
                 "Борт": document.getElementById('side').value,
                 "Уступ": document.getElementById('bench').value
             };
 
             savedPoints.push(point);
-
-            // Отрисовка постоянного кружка. 
-            // Используем фиксированный радиус, чтобы он не перекрывал всё при зуме
-            L.circleMarker([y, x], {
-                radius: 8, 
-                fillColor: getMarkerColor(debit),
-                color: "#fff",
-                weight: 1,
-                fillOpacity: 0.9
-            }).addTo(map).bindPopup(`
-                <div style="font-size: 12px;">
-                    <b>${point.Борт} борт</b><br>
-                    Дебит: ${debit} л/с<br>
-                    Уступ: ${point.Уступ}
-                </div>
-            `);
-
-            map.removeLayer(tempMarker);
-            tempMarker = null;
+            localStorage.setItem('pitData', JSON.stringify(savedPoints));
+            drawPoint(point);
             updateList();
             this.reset();
             document.getElementById('posX').value = '';
             document.getElementById('posY').value = '';
+            if (tempMarker) map.removeLayer(tempMarker);
         };
 
         function updateList() {
             const list = document.getElementById('pointsList');
             list.innerHTML = savedPoints.map(p => `
-                <div class="p-3 bg-white border border-slate-200 rounded-lg shadow-sm border-l-4" style="border-left-color: ${getMarkerColor(p.Дебит_л_с)}">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-black text-slate-800 text-[11px] uppercase">${p.Борт} | ${p.Уступ}</span>
-                        <span class="font-black text-xs" style="color: ${getMarkerColor(p.Дебит_л_с)}">${p.Дебит_л_с} л/с</span>
+                <div class="p-3 bg-white border border-slate-200 rounded-xl shadow-sm border-l-4" style="border-left-color: ${getMarkerColor(p.Дебит_л_с)}">
+                    <div class="flex justify-between items-center font-black text-[10px]">
+                        <span>${p.Борт} | УСТУП ${p.Уступ}</span>
+                        <span style="color: ${getMarkerColor(p.Дебит_л_с)}">${p.Дебит_л_с} л/с</span>
                     </div>
-                    <div class="text-[9px] text-slate-400 font-mono italic">X: ${p.X_Coord} Y: ${p.Y_Coord}</div>
                 </div>
             `).reverse().join('');
-            document.getElementById('counter').innerText = savedPoints.length;
+        }
+
+        function clearStorage() {
+            if(confirm("Удалить все данные из памяти телефона?")) {
+                localStorage.clear();
+                location.reload();
+            }
         }
 
         function exportToExcel() {
-            if (savedPoints.length === 0) return alert("Журнал пуст!");
+            if (savedPoints.length === 0) return alert("Нет данных");
             const ws = XLSX.utils.json_to_sheet(savedPoints);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Данные");
-            XLSX.writeFile(wb, `RG_Gold_Monitoring.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Data");
+            XLSX.writeFile(wb, `RG_Gold_Mobile_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        window.onload = initMap;
+        window.onload = () => { initMap(); updateList(); };
     </script>
 </body>
 </html>
